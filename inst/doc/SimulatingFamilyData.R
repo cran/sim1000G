@@ -1,6 +1,14 @@
 ## ----results='asis',echo=F-----------------------------------------------
 cat("<style>body { zoom: 0.8; }   .main-content pre> code {  white-space: pre-wrap; } </style>")
 
+## ------------------------------------------------------------------------
+if(0) install.packages("stringr")
+if(0) install.packages("hapsim_0.31.tar.gz",repos=NULL, source=T)
+
+
+## ------------------------------------------------------------------------
+if(0) install.packages("sim1000G_1.04.tar.gz",repos=NULL, source=T)
+
 ## ---- results='hold', collapse=F, eval=T---------------------------------
 
 library(sim1000G)
@@ -80,8 +88,10 @@ time10families = function() {
 fam <- time10families() 
 
 
-writePED(vcf, fam,"/tmp/out")
 
+# Uncomment the following line to write a plink compatible ped/map file
+
+# writePED(vcf, fam,"out")
 
 
 

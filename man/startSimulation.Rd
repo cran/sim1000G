@@ -2,7 +2,8 @@
 % Please edit documentation in R/simulation.R
 \name{startSimulation}
 \alias{startSimulation}
-\title{Start the simulation}
+\title{Starts and initializes the data structures required for a simulation. A VCF file
+should be read beforehand with the function readVCF.}
 \usage{
 startSimulation(vcf, totalNumberOfIndividuals = 250, randomdata = 0)
 }
@@ -14,7 +15,8 @@ startSimulation(vcf, totalNumberOfIndividuals = 250, randomdata = 0)
 \item{randomdata}{If 1, disregards the genotypes in the vcf file and generates markers that are not in LD. Generally do not use.}
 }
 \description{
-Start the simulation
+Starts and initializes the data structures required for a simulation. A VCF file
+should be read beforehand with the function readVCF.
 }
 \examples{
 library("sim1000G")
@@ -25,7 +27,10 @@ vcf_file = sprintf("\%s/region.vcf.gz", examples_dir)
 vcf = readVCF( vcf_file, maxNumberOfVariants = 100 , min_maf = 0.12 ,max_maf = NA)
 
 # For a realistic genetic map, use the functions downloadGeneticMap / readGeneticMap
-generateFakeGeneticMap()
+
+genetic_map_of_region = system.file("examples","chr4-geneticmap.txt", package = "sim1000G")
+readGeneticMapFromFile(genetic_map_of_region)
+
 
 plotRegionalGeneticMap(vcf$vcf[,2]+1)
 

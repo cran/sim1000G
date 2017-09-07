@@ -15,7 +15,7 @@ vcf_file = sprintf("%s/region.vcf.gz", examples_dir)
 vcf = readVCF( vcf_file, maxNumberOfVariants = 100 , min_maf = 0.12 ,max_maf = NA)
 
 # For realistic data use the functions downloadGeneticMap / readGeneticMap
-generateFakeGeneticMap()
+generateUniformGeneticMap()
 plotRegionalGeneticMap(seq(1e6,100e6,by=1e6/2))}
 }
 \description{
