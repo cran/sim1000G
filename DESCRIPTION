@@ -2,8 +2,8 @@ Package: sim1000G
 Type: Package
 Title: Genotype Simulations for Rare or Common Variants Using
         Haplotypes from 1000 Genomes
-Version: 1.32
-Date: 2017-09-05
+Version: 1.33
+Date: 2017-12-13
 Author: Apostolos Dimitromanolakis <apostolis@live.ca>, 
     Jingxiong Xu <jingxiong.xu@mail.utoronto.ca>,
     Agnieszka Krol <krol@lunenfeld.ca>,
@@ -18,5 +18,5 @@ RoxygenNote: 5.0.1
 Suggests: knitr, prettydoc, testthat, rmarkdown, gplots
 Encoding: UTF-8
 Repository: CRAN
-Packaged: 2017-09-06 17:09:13 UTC; apo
-Date/Publication: 2017-09-07 19:52:22 UTC
+Packaged: 2017-12-13 17:09:13 UTC; apo
+Date/Publication: 2017-12-15 13:01:20 UTC
