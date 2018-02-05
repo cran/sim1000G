@@ -1,31 +1,35 @@
 ## ----results='asis',echo=F-----------------------------------------------
-cat("<style>body { zoom: 0.8; }   .main-content pre> code {  white-space: pre-wrap; } </style>")
+cat("<style>body { zoom: 1.2; }   .main-content pre> code {  white-space: pre-wrap; } </style>")
 
-## ------------------------------------------------------------------------
-if(0) install.packages("stringr")
-if(0) install.packages("hapsim_0.31.tar.gz",repos=NULL, source=T)
+## ---- eval=FALSE---------------------------------------------------------
+#  install.packages("sim1000G")
 
+## ---- eval=FALSE---------------------------------------------------------
+#  install.packages("stringr")
+#  install.packages("hapsim")
+#  install.packages("readr")
+#  
+#  install.packages("sim1000G_1.36.2.tar.gz",repos=NULL, source=T)
+#  
 
-## ------------------------------------------------------------------------
-if(0) install.packages("sim1000G_1.04.tar.gz",repos=NULL, source=T)
-
-## ---- results='hold', collapse=F, eval=T---------------------------------
+## ----eval=T, message=FALSE, warning=FALSE, collapse=F, results='hide'----
 
 library(sim1000G)
 
-download.file("https://adimitromanolakis.github.io/sim1000G/data/region.vcf.gz", destfile = "region.vcf.gz")
+examples_dir = system.file("examples", package = "sim1000G")
+vcf_file = file.path(examples_dir, "region.vcf.gz")
 
 
-vcf = readVCF("region.vcf.gz", maxNumberOfVariants = 100 , min_maf = 0.02 , max_maf = NA)
+vcf = readVCF( vcf_file , maxNumberOfVariants = 100 , min_maf = 0.02 , max_maf = NA ) 
 
 
-downloadGeneticMap(4)
+downloadGeneticMap( 4 )
 readGeneticMap( chromosome = 4 )
 
-startSimulation(vcf, totalNumberOfIndividuals = 1200)
+startSimulation( vcf )
 
 
-## ---- echo=T, results='hold', eval=T, fig.width=17,fig.height=12---------
+## ----eval=T, echo=T, fig.height=12, fig.width=17, message=FALSE, warning=FALSE, results='hide'----
 
 
 
@@ -55,7 +59,7 @@ heatmap.2(cor(genotypes)^2, col=rev(heat.colors(100)) , trace="none",Rowv=F,Colv
 
 
 
-## ---- echo=T, results='hold', eval=T-------------------------------------
+## ---- echo=T, results='hold', eval=T   ,  results='hide'-----------------
 
 
 # Simulate one family with 2 offspring
@@ -96,7 +100,7 @@ fam <- time10families()
 
 
 
-## ------------------------------------------------------------------------
+## ----  results='hide'----------------------------------------------------
 
 
 n = SIM$individuals_generated

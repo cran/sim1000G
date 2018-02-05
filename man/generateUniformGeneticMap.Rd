@@ -2,12 +2,12 @@
 % Please edit documentation in R/recombination.R
 \name{generateUniformGeneticMap}
 \alias{generateUniformGeneticMap}
-\title{Generates a fake genetic map.}
+\title{Generates a uniform genetic map.}
 \usage{
 generateUniformGeneticMap()
 }
 \description{
-Generates a fake genetic map by approximating 1 cm / Mbp. Only used for examples.
+Generates a uniform genetic map by approximating 1 cm / Mbp. Only used for examples.
 }
 \examples{
 
@@ -22,4 +22,3 @@ generateUniformGeneticMap()
 plotRegionalGeneticMap(seq(1e6,100e6,by=1e6/2))
 
 }
-

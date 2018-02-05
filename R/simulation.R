@@ -20,6 +20,39 @@ SIM = new.env()
 
 
 
+#' Holds general package options
+#' @export
+pkg.opts = new.env()
+pkg.opts$recombination = 1
+
+
+#' Set options of the recombination model.
+#'
+#'
+#' @param model Either poisson or chisq
+#'
+#' @examples
+#'
+#' setRecombinationModel("poisson")
+#'
+#' setRecombinationModel("chisq")
+#'
+#' @export
+setRecombinationModel = function(model) {
+
+    if(model == "poisson") { pkg.opts$recombination = 0 }
+    else
+        if(model == "chisq") { pkg.opts$recombination = 1 }
+        else
+        { stop("model should be poisson or chisq")}
+
+
+}
+
+
+
+
+
 # vcf_url = "https://adimitromanolakis.github.io/sim1000G/inst/examples/region.vcf.gz"
 # vcf_file = gzcon(url(vcf_url))
 # vcf_file = textConnection( readLines(vcf_file) )
@@ -34,8 +67,10 @@ SIM = new.env()
 #' should be read beforehand with the function readVCF.
 #'
 #' @param vcf Input vcf file of a region (can be .gz). Must contain phased data.
-#' @param totalNumberOfIndividuals Maximum Number of individuals that will ever be generated
-#' @param randomdata If 1, disregards the genotypes in the vcf file and generates markers that are not in LD. Generally do not use.
+#' @param totalNumberOfIndividuals Maximum Number of individuals to allocate memory for. Set it above the number of individuals you want to simulate.
+#' @param subset A subset of individual IDs to use for simulation
+#' @param randomdata If 1, disregards the genotypes in the vcf file and generates independent markers that are not in LD.
+#' @param typeOfGeneticMap Specify whether to download a genetic map for this chromosome
 #'
 #' @examples
 #' library("sim1000G")
@@ -56,21 +91,43 @@ SIM = new.env()
 #' startSimulation(vcf, totalNumberOfIndividuals = 200)
 #'
 #' @export
-startSimulation = function(vcf, totalNumberOfIndividuals = 250, randomdata = 0) {
+startSimulation = function(vcf, totalNumberOfIndividuals = 2000,
+                           subset = NA, randomdata = 0,
+                           typeOfGeneticMap = "download"
+                           ) {
 
         cat("[#####...] Creating SIM object\n");
 
         # Original haplotypes from 1000 genomes / other data
 
-        SIM$population_gt1 = vcf$gt1
-        SIM$population_gt2 = vcf$gt2
+
+        if(class(subset) == "logical" ) {
+
+
+            SIM$population_gt1 = vcf$gt1
+            SIM$population_gt2 = vcf$gt2
+            SIM$individual_ids = vcf$individual_ids
+
+        } else {
+
+
+            s = which(vcf$individual_ids %in% subset)
+
+            SIM$population_gt1 = vcf$gt1[,s]
+            SIM$population_gt2 = vcf$gt2[,s]
+            SIM$individual_ids = vcf$individual_ids[s]
+
+            cat("Using", ncol(SIM$population_gt1), " individuals in simulation\n")
+
+
+        }
 
 
 
         if(randomdata) {
 
-            str(SIM$population_gt1)
-            # indoviduals in columns
+            #str(SIM$population_gt1)
+            # individuals in columns
 
             x = SIM$population_gt1*0
 
@@ -89,10 +146,27 @@ startSimulation = function(vcf, totalNumberOfIndividuals = 250, randomdata = 0) 
 
         # Generate haplodata object
 
-        dim( t( cbind(SIM$population_gt1, SIM$population_gt2) )  )
+        haplomatrix = t( cbind(SIM$population_gt1, SIM$population_gt2) )
+
+        #dim(haplomatrix)
+
+        meanv = apply(haplomatrix,2,mean)
+        #print( range(meanv) )
+
+        non_polymorphic = which( meanv == 0 | meanv == 1 )
+        polymorphic = which( meanv > 0  & meanv < 1 )
+
+        if(length(non_polymorphic) >  0 )  {
+            cat("Warning: Some variants are not polymorphic. (n=" , non_polymorphic , ")\n");
+        }
 
 
-        SIM$haplodata = haplodata(  t( cbind(SIM$population_gt1, SIM$population_gt2) ) )
+
+        SIM$non_polymorphic = non_polymorphic
+        SIM$polymorphic = polymorphic
+
+
+        SIM$haplodata = haplodata( haplomatrix[,polymorphic]  )
         cat("[#####...] Haplodata object created\n");
 
 
@@ -101,6 +175,43 @@ startSimulation = function(vcf, totalNumberOfIndividuals = 250, randomdata = 0) 
 
         SIM$varinfo = vcf$vcf[,1:8]
         SIM$bp = vcf$vcf[,2]
+
+
+
+
+
+        if(length(ls(geneticMap) ) == 0) {
+
+            cat("Downloading genetic map for chromosome " , vcf$vcf[1,1],"\n" )
+
+            readGeneticMap(vcf$vcf[1,1])
+
+
+            #stop("ERROR: Genetic map has not been read yet\n");
+        } else {
+
+         s = range(geneticMap$bp)
+
+         vcf_chrom = sub("^chr","",vcf$vcf[,1])
+         gm_chrom = sub("chr","",geneticMap$chr[1])
+
+         if( sum ( SIM$bp > s[2] | SIM$bp < s[1] ) > 0 ) {
+            stop("Error: Genetic map does not match the region being simulated\n");
+
+         }
+
+         if(gm_chrom[1] != vcf_chrom[1]) {
+            cat(gm_chrom,vcf_chrom[1],"\n");
+
+            stop("Error: mismatch between chromosomes in genetic map and vcf ");
+         }
+
+
+
+        }
+
+
+
         SIM$cm = approx( geneticMap$bp, geneticMap$cm, SIM$bp )$y
 
         SIM$N_markers = nrow(vcf$gt1)
@@ -128,19 +239,44 @@ startSimulation = function(vcf, totalNumberOfIndividuals = 250, randomdata = 0) 
 
 
 
+
+SIM$refreshPool = function() {
+
+    SIM$npool = 500
+    SIM$pool = haplosim2(SIM$npool, SIM$haplodata, summary = F)$data
+
+    s = sample(1: SIM$npool, SIM$npool)
+    #SIM$pool = SIM$pool[s,]
+
+}
+
+
 SIM$generateNewHaplotypes = function(n = -1) {
 
     if(SIM$npool < 2) {
-        cat("Generate new individual pool n=200\n");
 
+       # cat("Generate new haplotype pool..\n");
 
-        SIM$npool = 500
-        SIM$pool = haplosim2(SIM$npool, SIM$haplodata, summary = F)$data
+        SIM$refreshPool()
 
 
     }
 
-    GT = list(gt1 =  SIM$pool[SIM$npool,], gt2 = SIM$pool[SIM$npool-1,] )
+    nvar = nrow(SIM$population_gt1)
+
+    gt1 = rep(0, nvar)
+    gt2 = rep(0, nvar)
+
+
+    gt1[SIM$polymorphic] = SIM$pool[SIM$npool,]
+    gt2[SIM$polymorphic] = SIM$pool[SIM$npool-1,]
+
+
+    GT = list(gt1 = gt1 , gt2 = gt2 )
+
+    #GT = list(gt1 =  SIM$pool[SIM$npool,],  gt2 = SIM$pool[SIM$npool-1,] )
+
+
     SIM$npool = SIM$npool - 2
 
     SIM$last_ancestral_index = SIM$last_ancestral_index  + 1
@@ -152,11 +288,19 @@ SIM$generateNewHaplotypes = function(n = -1) {
 
 SIM$addUnrelatedIndividual = function() {
 
+
+    #    e1 = environment()
+    #    print(parent.env(e1))
+    #    print(ls(  parent.env(e1)   ))
+
+
+
+
     newGenotypes = SIM$generateNewHaplotypes()
 
     if(SIM$individuals_generated >= SIM$total_individuals) {
 
-        stop("No more space for saving new individual genotypes")
+        stop("No more space for saving new individual genotypes. You can increase the parameter maximumNumberOfIndividuals when calling function startSimulation.")
 
     }
 
@@ -164,7 +308,10 @@ SIM$addUnrelatedIndividual = function() {
     SIM$individuals_generated = SIM$individuals_generated + 1
     j = SIM$individuals_generated
 
-    cat("Adding individual ",j, " from pool\n");
+
+    # cat("N less than 0 is:", sum(newGenotypes$gt1<0)  , sum (newGenotypes$gt2<0)  , "id=", j,"\n")
+
+    # cat("Adding individual ",j, " from pool\n");
 
 
     SIM$gt1[j,] = newGenotypes$gt1
@@ -178,11 +325,70 @@ SIM$addUnrelatedIndividual = function() {
 }
 
 
+
+
+
+SIM$addUnrelatedIndividualWithHaplotype = function(new_haplotype, ancestral_index) {
+
+
+    #    e1 = environment()
+    #    print(parent.env(e1))
+    #    print(ls(  parent.env(e1)   ))
+
+
+
+    newGenotypes = SIM$generateNewHaplotypes()
+
+    if(length(new_haplotype) !=  length(newGenotypes$gt1)) {
+
+        stop("new_haplotype length is wrong");
+    }
+
+
+
+    if(SIM$individuals_generated >= SIM$total_individuals) {
+
+        stop("No more space for saving new individual genotypes. You can increase the parameter maximumNumberOfIndividuals when calling function startSimulation.")
+
+    }
+
+
+    SIM$individuals_generated = SIM$individuals_generated + 1
+    j = SIM$individuals_generated
+
+    # cat("Adding individual ",j, " from pool\n");
+
+
+    SIM$gt1[j,] = newGenotypes$gt1
+    SIM$gt2[j,] = newGenotypes$gt2
+
+    SIM$origin1[j,] = SIM$last_ancestral_index
+    SIM$origin2[j,] = -SIM$last_ancestral_index
+
+
+    SIM$gt2[j,] = new_haplotype
+    SIM$origin2[j,] = - ancestral_index
+
+
+
+    return(j)
+}
+
+
+
+
+
+
+
+
+
+
+
 SIM$addIndividualFromGenotypes = function(gt1,gt2) {
 
     if(SIM$individuals_generated >= SIM$total_individuals) {
 
-        stop("No more space for generating new individual genotypes")
+        stop("No more space for saving new individual genotypes. You can increase the parameter maximumNumberOfIndividuals when calling function startSimulation.")
 
     }
 
@@ -268,12 +474,47 @@ SIM$mate = function(i, j) {
 
 
 SIM$reset = function() {
+    SIM$pool = NA
+    SIM$npool = 0
+
     SIM$individuals_generated = 0
 }
 
 
+#' Generates variant data for n unrelated individuals
+#'
+#'
+#'
+#' @param N how many individuals to generate
+#'
+#' @return IDs of the generated individuals
+#'
+#' @examples
+#'
+#' library("sim1000G")
+#'
+#' examples_dir = system.file("examples", package = "sim1000G")
+#' vcf_file = file.path(examples_dir, "region.vcf.gz")
+#' vcf = readVCF( vcf_file, maxNumberOfVariants = 100 , min_maf = 0.12 ,max_maf = NA)
+#'
+#' genetic_map_of_region = system.file("examples","chr4-geneticmap.txt", package = "sim1000G")
+#' readGeneticMapFromFile(genetic_map_of_region)
+#'
+#' startSimulation(vcf, totalNumberOfIndividuals = 1200)
+#' ids = generateUnrelatedIndividuals(20)
+#'
+#' # See also the documentation on our github page
+#'
+#' @export
+generateUnrelatedIndividuals = function(N=1) {
+
+    id = c()
+    for(i in 1:N) id[i] = SIM$addUnrelatedIndividual()
 
 
+    return( id )
+
+}
 
 
 
@@ -305,7 +546,7 @@ SIM$reset = function() {
 #' library("sim1000G")
 #'
 #' examples_dir = system.file("examples", package = "sim1000G")
-#' vcf_file = sprintf("%s/region.vcf.gz", examples_dir)
+#' vcf_file = file.path(examples_dir, "region.vcf.gz")
 #' vcf = readVCF( vcf_file, maxNumberOfVariants = 100 , min_maf = 0.12 ,max_maf = NA)
 #'
 #' genetic_map_of_region = system.file("examples","chr4-geneticmap.txt", package = "sim1000G")
@@ -402,7 +643,7 @@ newFamilyWithOffspring = function(family_id, noffspring = 2) {
 #' library("sim1000G")
 #'
 #' examples_dir = system.file("examples", package = "sim1000G")
-#' vcf_file = sprintf("%s/region.vcf.gz", examples_dir)
+#' vcf_file = file.path(examples_dir, "region.vcf.gz")
 #' vcf = readVCF( vcf_file, maxNumberOfVariants = 100 , min_maf = 0.12 ,max_maf = NA)
 #'
 #' # For realistic data use the functions downloadGeneticMap / readGeneticMap
@@ -488,7 +729,7 @@ newFamily3generations = function(familyid, noffspring2 = 2, noffspring3 = c(1,1)
 #' library("sim1000G")
 #'
 #' examples_dir = system.file("examples", package = "sim1000G")
-#' vcf_file = sprintf("%s/region.vcf.gz", examples_dir)
+#' vcf_file = file.path(examples_dir, "region.vcf.gz")
 #' vcf = readVCF( vcf_file, maxNumberOfVariants = 100 , min_maf = 0.12 ,max_maf = NA)
 #'
 #' # For realistic data use the functions downloadGeneticMap / readGeneticMap
@@ -514,7 +755,7 @@ computePairIBD12 = function(i,j) {
     r2 = SIM$origin2[j,]
 
 
-    table(q1,q2)
+    # table(q1,q2)
 
     IBD1H1 = q1 == r1 | q1 == r2
     IBD1H2 = q2 == r1 | q2 == r2
@@ -547,7 +788,7 @@ computePairIBD12 = function(i,j) {
 #' library("sim1000G")
 #'
 #' examples_dir = system.file("examples", package = "sim1000G")
-#' vcf_file = sprintf("%s/region.vcf.gz", examples_dir)
+#' vcf_file = file.path(examples_dir, "region.vcf.gz")
 #' vcf = readVCF( vcf_file, maxNumberOfVariants = 100 , min_maf = 0.12 ,max_maf = NA)
 #'
 #' # For realistic data use the functions downloadGeneticMap / readGeneticMap
@@ -581,6 +822,8 @@ computePairIBD1 = function(i,j) {
 
     IBD1=IBD12-IBD2
 
+    IBD1
+
 }
 
 
@@ -600,7 +843,7 @@ computePairIBD1 = function(i,j) {
 #' library("sim1000G")
 #'
 #' examples_dir = system.file("examples", package = "sim1000G")
-#' vcf_file = sprintf("%s/region.vcf.gz", examples_dir)
+#' vcf_file = file.path(examples_dir, "region.vcf.gz")
 #' vcf = readVCF( vcf_file, maxNumberOfVariants = 100 , min_maf = 0.12 ,max_maf = NA)
 #'
 #' # For realistic data use the functions downloadGeneticMap / readGeneticMap
@@ -666,6 +909,110 @@ printMatrix = function(m) {
 
 
 
+
+#' Retrieve a matrix of simulated genotypes for a specific set of individual IDs
+#'
+#'
+#' @param ids Vector of ids of individuals to retrieve.
+#'
+#' @examples
+#'
+#' library("sim1000G")
+#'
+#' examples_dir = system.file("examples", package = "sim1000G")
+#' vcf_file = file.path(examples_dir, "region.vcf.gz")
+#' vcf = readVCF( vcf_file, maxNumberOfVariants = 100 , min_maf = 0.12 ,max_maf = NA)
+#'
+#' # For realistic data use the functions downloadGeneticMap / readGeneticMap
+#' generateUniformGeneticMap()
+#'
+#' startSimulation(vcf, totalNumberOfIndividuals = 200)
+#'
+#' ped1 = newNuclearFamily(1)
+#'
+#' retrieveGenotypes(ped1$gtindex)
+#'
+#' @export
+#'
+retrieveGenotypes = function(ids) {
+    m = SIM$gt1[ids,] + SIM$gt2[ids,]
+
+    rownames(m) = ids
+
+    m
+
+}
+
+
+
+
+saved_SIM = new.env()
+
+
+#' Save the data for a simulation for later use. When simulating multiple populations it
+#' allows saving and restoring of simulation data for each population.
+#'
+#' @param id Name the simulation will be saved as.
+#'
+#' @examples
+#'
+#'
+#'
+#' examples_dir = system.file("examples", package = "sim1000G")
+#' vcf_file = file.path(examples_dir, "region.vcf.gz")
+#' vcf = readVCF( vcf_file, maxNumberOfVariants = 100 , min_maf = 0.12 ,max_maf = NA)
+#'
+#' # For realistic data use the functions downloadGeneticMap / readGeneticMap
+#' generateUniformGeneticMap()
+#'
+#' startSimulation(vcf, totalNumberOfIndividuals = 200)
+#'
+#' ped1 = newNuclearFamily(1)
+#'
+#' saveSimulation("sim1")
+#'
+#' @export
+#'
+saveSimulation = function(id) {
+    saved_SIM[[id]] = as.list(SIM)
+    SIM = new.env()
+
+
+}
+
+
+
+
+
+
+
+#' Load some previously saved simulation data by function saveSimulation
+#'
+#' @param id Name the simulation to load which was previously saved by saveSimulation
+#'
+#' @examples
+#'
+#' \dontrun{
+#'
+#' loadSimulation("sim1")
+#'
+#' }
+#'
+#' @export
+#'
+loadSimulation = function(id) {
+
+    print(names(saved_SIM))
+
+    x = (saved_SIM[[id]])
+
+    for(i in names(x)) SIM[[i]] = x[[i]]
+
+    cat(" N=" , length(SIM$individual_ids), " individuals in origin simulation pool.\n")
+
+    SIM$npool = 0
+
+}
 
 
 
