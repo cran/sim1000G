@@ -1,6 +1,11 @@
-## ----eval=TRUE, message=FALSE, warning=FALSE-----------------------------
+## ----echo=FALSE, results='hide'------------------------------------------
 
 
+cat("<style> body { font-size: 500%; background:red; } </style>")
+
+## ----message=FALSE, warning=FALSE, include=TRUE--------------------------
+
+sink(tempfile())
 ped_file_1000genomes = system.file("examples", "20130606_g1k.ped", package = "sim1000G")
 
 ped = read.table(ped_file_1000genomes,h=T,as=T,sep="\t")
@@ -8,22 +13,36 @@ ped = read.table(ped_file_1000genomes,h=T,as=T,sep="\t")
 pop1 = c("CEU","TSI","GBR")
 id1 = ped$Individual.ID [ ped$Population %in% pop1 ]
 
-cat(c(id1),file="/tmp/samples1.txt",sep="\n")
 
 
 id2 = ped$Individual.ID [ ped$Population == "ASW" ]
 
-cat(c(id2),file="/tmp/samples2.txt",sep="\n")
 
 pop_map = ped$Population
 names(pop_map) = ped$Individual.ID
 
 
-## ---- echo=FALSE,fig.width=12,fig.height=12 , message=TRUE, warning=FALSE----
+
+write_sample_files = 0
+
+if(write_sample_files == 1) {
+  cat(c(id1,id2),file="/tmp/samples1.txt",sep="\n")
+  # cat(c(id2),file="/tmp/samples2.txt",sep="\n")
+}
+
+
+
+## ----echo=TRUE, fig.height=12, fig.width=12, message=FALSE, warning=FALSE , results = 'hide'----
 library(sim1000G)
 
+
+vcf_file = "/tmp/chr4-80-filt.vcf.gz"
+
+if(1) {
 examples_dir = system.file("examples", package = "sim1000G")
 vcf_file = file.path(examples_dir, "region-chr4-93-TMEM156.vcf.gz" )
+}
+
 
 vcf  = readVCF(vcf_file,   maxNumberOfVariants = 200 , min_maf = 0.02, max_maf = 0.32)
 
@@ -54,7 +73,7 @@ gplots::heatmap.2(cor(t( vcf$gt1[,id_pop2]+vcf$gt2[,id_pop2]))^2,col=rev( heat.c
 }
 
 
-## ----echo=FALSE, eval=FALSE, fig.width=12, fig.height=12-----------------
+## ----echo=TRUE, eval=FALSE, fig.width=12, fig.height=12------------------
 #  #
 #  
 #  startSimulation(vcf, subset = id1)

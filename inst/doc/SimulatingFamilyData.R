@@ -1,16 +1,8 @@
 ## ----results='asis',echo=F-----------------------------------------------
-cat("<style>body { zoom: 1.2; }   .main-content pre> code {  white-space: pre-wrap; } </style>")
+cat("<style>body { zoom: 1.0; }   .main-content pre> code {  white-space: pre-wrap; } </style>")
 
 ## ---- eval=FALSE---------------------------------------------------------
 #  install.packages("sim1000G")
-
-## ---- eval=FALSE---------------------------------------------------------
-#  install.packages("stringr")
-#  install.packages("hapsim")
-#  install.packages("readr")
-#  
-#  install.packages("sim1000G_1.36.2.tar.gz",repos=NULL, source=T)
-#  
 
 ## ----eval=T, message=FALSE, warning=FALSE, collapse=F, results='hide'----
 
@@ -19,11 +11,9 @@ library(sim1000G)
 examples_dir = system.file("examples", package = "sim1000G")
 vcf_file = file.path(examples_dir, "region.vcf.gz")
 
-
 vcf = readVCF( vcf_file , maxNumberOfVariants = 100 , min_maf = 0.02 , max_maf = NA ) 
 
-
-downloadGeneticMap( 4 )
+# downloadGeneticMap( 4 )
 readGeneticMap( chromosome = 4 )
 
 startSimulation( vcf )
@@ -33,7 +23,8 @@ startSimulation( vcf )
 
 
 
-SIM$reset()
+# The following function will erase all the indivudals that have been simulated and start over.
+# SIM$reset()
 
 
 id = c()
@@ -95,7 +86,7 @@ fam <- time10families()
 
 # Uncomment the following line to write a plink compatible ped/map file
 
-# writePED(vcf, fam,"out")
+# writePED(vcf, fam, "out")
 
 
 

@@ -1,36 +1,60 @@
 ---
-title: "sim1000G - example 1"
+title: "sim1000G - Extracting regions from 1000 genomes vcf files for use with sim1000G"
 author: "Apostolos Dimitromanolakis"
+date: February 10, 2018
 editor_options: 
   chunk_output_type: inline
-output: rmarkdown::html_document
+
+
+
+
+
+#output: rmarkdown::html_vignette
+#output: rticles::acm_article
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+    
+#output: pinp::pinp
+
 vignette: >
-  %\VignetteIndexEntry{Quickstart2}
+  %\VignetteIndexEntry{Extracting regions from 1000 genomes vcf files for use with sim1000G}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
 ---
 
+## Introduction
 
 
-## Downloading necessary files
+sim1000G allows for easy simulation of unrelated individuals starting from sequencing 1000 genomes varians.
+
+The following, somewhat complicated example, showcases the following:
+
+* how to extract regions from 1000 genomes
+* simulate individuals from the CEU+TSI+GBR individuals.
+* simulate individuals from the ASW individuals.
+* combinte the two simulated data into one dataset.
+* perform SKAT test for the region and examine the effects of population stratification
 
 
-1000 genomes vcf files are downloaded from:
+The original 1000 genomes VCF files are obtained from 1000 genomes ftp site, at the location:
 
 [http://hgdownload.cse.ucsc.edu/gbdb/hg19/1000Genomes/phase3/](http://hgdownload.cse.ucsc.edu/gbdb/hg19/1000Genomes/phase3/)
 
 
-Genetic map can be downloaded through sim1000G.
+```{R echo=FALSE, results='hide'}
 
 
-## Selecting the target population (CEU)
-
-We extract the CEU samples from a region of chromosome 4 from 80MBp to 1000MBp using bcftools:
-
-
-```{R eval=TRUE, message=FALSE, warning=FALSE}
+cat("<style> body { font-size: 500%; background:red; } </style>")
+```
 
 
+### Generating IDs of individuals to extract
+
+```{R message=FALSE, warning=FALSE, include=TRUE}
+
+sink(tempfile())
 ped_file_1000genomes = system.file("examples", "20130606_g1k.ped", package = "sim1000G")
 
 ped = read.table(ped_file_1000genomes,h=T,as=T,sep="\t")
@@ -38,43 +62,61 @@ ped = read.table(ped_file_1000genomes,h=T,as=T,sep="\t")
 pop1 = c("CEU","TSI","GBR")
 id1 = ped$Individual.ID [ ped$Population %in% pop1 ]
 
-cat(c(id1),file="/tmp/samples1.txt",sep="\n")
 
 
 id2 = ped$Individual.ID [ ped$Population == "ASW" ]
 
-cat(c(id2),file="/tmp/samples2.txt",sep="\n")
 
 pop_map = ped$Population
 names(pop_map) = ped$Individual.ID
 
+
+
+write_sample_files = 0
+
+if(write_sample_files == 1) {
+  cat(c(id1,id2),file="/tmp/samples1.txt",sep="\n")
+  # cat(c(id2),file="/tmp/samples2.txt",sep="\n")
+}
+
+
 ```
 
 
+### Extracting variant sets using bcftools
+
+
+We extract the CEU,TSI,GBR and ASW samples from a region of chromosome 4 from 73MBp to 74MBp using bcftools. The following command are run in the shell:
 
 
 
-
-
-```{sh, eval=F}
+```{sh, eval=F, message=FALSE, warning=FALSE}
 
 #77356278-77703432
 
 INPUT_VCF=ALL.chr4.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz
 
-bcftools view -S /tmp/samples1.txt -r 4:73000000-74000000 --force-samples $INPUT_VCF > ~/tmp/chr4-80.vcf
+bcftools view -S /tmp/samples1.txt -r 4:73000000-74000000 --force-samples $INPUT_VCF > /tmp/chr4-80.vcf
 
- bcftools  filter -i 'AF>0 && EUR_AF>0 && AFR_AF>0' < ~/tmp/chr4-80.vcf | gzip > ~/tmp/chr4-80-filt.vcf.gz
+bcftools  filter -i 'AF>0 && EUR_AF>0 && AFR_AF>0' < /tmp/chr4-80.vcf | gzip > /tmp/chr4-80-filt.vcf.gz
 
 
 ```
  
+ 
+### Reading the vcf file
 
-```{R, echo=FALSE,fig.width=12,fig.height=12 , message=TRUE, warning=FALSE}
+```{R echo=TRUE, fig.height=12, fig.width=12, message=FALSE, warning=FALSE , results = 'hide' }
 library(sim1000G)
 
+
+vcf_file = "/tmp/chr4-80-filt.vcf.gz"
+
+if(1) {
 examples_dir = system.file("examples", package = "sim1000G")
 vcf_file = file.path(examples_dir, "region-chr4-93-TMEM156.vcf.gz" )
+}
+
 
 vcf  = readVCF(vcf_file,   maxNumberOfVariants = 200 , min_maf = 0.02, max_maf = 0.32)
 
@@ -107,7 +149,10 @@ gplots::heatmap.2(cor(t( vcf$gt1[,id_pop2]+vcf$gt2[,id_pop2]))^2,col=rev( heat.c
 ```
 
 
-```{R echo=FALSE, eval=FALSE, fig.width=12, fig.height=12}
+### Starting two distinct simulations for the two sample sets and simulating unrelated individuals
+
+
+```{R echo=TRUE, eval=FALSE, fig.width=12, fig.height=12}
 #
 
 startSimulation(vcf, subset = id1)
@@ -141,6 +186,11 @@ gplots::heatmap.2(cor( genotypes2 )^2,col=rev( heat.colors(100) ) ,Rowv=F,Colv=F
 
 
 ```
+
+
+
+
+### Combining the two datasets and running SKAT
 
 
 ```{r, eval=FALSE}
@@ -216,3 +266,8 @@ SKATBinary((gt),obj)$p.value
 
 
 ```
+
+#### Genetic maps in sim1000G
+
+
+Through the functions readGeneticMap and downloadGeneticMap, we provide the functionality to automatically download genetic maps for GRCH37 build of the human genome. 
