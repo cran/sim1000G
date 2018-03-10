@@ -1,10 +1,10 @@
-c54737aaf8c9ec554c09a5029b868b14 *DESCRIPTION
+8da6294ecf82cee9bc636556aa7196dc *DESCRIPTION
 fff6e6b4d3a250d7f834e4c2f266cb10 *NAMESPACE
 1528f3e5b7888ea43b0d1d810fc8c0b4 *R/1000G-package.r
 73291800602e5b24ef50448d53db2660 *R/hapsim2-functions.R
 afcd2a1a4f9cbe47bc122e7b51258b95 *R/readvcf.R
-99b3cb1a8503341d64744a4f7bdfdc79 *R/recombination.R
-3b5c58a4820b3a3827599dda3752c41e *R/simulation.R
+f3f80f4d341874148ac025d60d418654 *R/recombination.R
+1377adc524bf8212c3f7a8714af5e424 *R/simulation.R
 ac34871e33529a3abdcf12e30dde0a5e *R/writeped.R
 15b5d6343ce8caa72e9065489e37f3a8 *README.md
 d6946020b6ada2ec0dd6cee79b4f9334 *build/vignette.rds
@@ -12,12 +12,12 @@ c338b17c1db72a161b3eb955a95c3350 *inst/CITATION
 5515108f7ebbae468824ef5d60f10ab3 *inst/datasets/README.txt
 3a4ccf98cbe0cb490373cd29462a4ff3 *inst/doc/ExtractingRegionsForSimulation.R
 4f5cdfef851e6e7e4c87d69a57be37e5 *inst/doc/ExtractingRegionsForSimulation.Rmd
-016db6283a2152384ac5aea799442eee *inst/doc/ExtractingRegionsForSimulation.html
+e2b6d87c0f8dc9f4f9b0cf4e24c61e32 *inst/doc/ExtractingRegionsForSimulation.html
 59c8ff6d96888085a6b84df0d5bde32c *inst/doc/SimulatingFamilyData.R
 a0012400b0fbcd47bd0a55d3720a82ff *inst/doc/SimulatingFamilyData.Rmd
-c1a581bd99094eb53ec28c0664065c5b *inst/doc/SimulatingFamilyData.html
-5dd9b251e2bcabb6f0a22ee0c342c959 *inst/doc/getting-started.html
+4bf3bd827b9b7b8f657fd01c1c19ecb1 *inst/doc/SimulatingFamilyData.html
 ce9150836ccbf135ba764e33f487d6fa *inst/examples/20130606_g1k.ped
+1f5eda9dce11a2581cd91484d15ba4f0 *inst/examples/amelia/start_sim_14Nov2017_2000_Apo.R
 5763e0e3e9627cf6cb21781c8cb04090 *inst/examples/chr4-geneticmap.txt
 f87f5d88050ef3a480d009ef29e8f663 *inst/examples/examine-maf-and-correlation.R
 2f1813705347e4e90bbed8866e02aac9 *inst/examples/example1-single-population.R
@@ -33,7 +33,6 @@ ea4355ebbd31f1b5b2552deca4377581 *inst/examples/generate-sim-cmds.R
 c4c8b3f7eadb70fb5e2624b57ba8ea73 *inst/examples/region.vcf.gz
 a8093e398ed6a62d0b6701663c748bc2 *inst/examples/sample_subset1.txt
 2e665e7ee89c009e2187ef069f9070cb *inst/examples/sample_subset2.txt
-a0b3ed8b74cbf2683e196592e2447f2c *inst/examples/sim1000G-timings.log.R
 1b4f9b8e1b133c4981e52dece6ffaa28 *inst/examples/timings.R
 cc539f96ffe580f93ea0ac7ab3aa5a2a *man/SIM.Rd
 710e20d2ad86da09a71ec279b0e3e34c *man/computePairIBD1.Rd
@@ -41,7 +40,7 @@ cc539f96ffe580f93ea0ac7ab3aa5a2a *man/SIM.Rd
 9cce6b1cad34c4199053b90632d40ac4 *man/computePairIBD2.Rd
 625742a8270b4538f86d09b557dcfbb1 *man/createVCF.Rd
 b39fca65f05c9f0540794c56d5f017e3 *man/crossoverCDFvector.Rd
-68138de17496e7825e1929c2d22e37a6 *man/downloadGeneticMap.Rd
+3f5f35c100d32d236b09218358f412c8 *man/downloadGeneticMap.Rd
 2e823cfe7a5298744de8c6709219b64a *man/generateChromosomeRecombinationPositions.Rd
 50f001b03c776a82a28559568b877812 *man/generateFakeWholeGenomeGeneticMap.Rd
 f433a59522473db8c7ebded8791c2c3e *man/generateRecombinationDistances.Rd
@@ -64,7 +63,7 @@ ab8f19ec9479f62c5da76369e9fefa86 *man/printMatrix.Rd
 6bc8c70c34a6541dada7bf9fe32194b6 *man/resetSimulation.Rd
 5246f227792d8bf289c373a16b352995 *man/retrieveGenotypes.Rd
 3eeb09603d253184eb9ed01e8303c19f *man/saveSimulation.Rd
-3325f12e408f5a75258444b1b00fac25 *man/setRecombinationModel.Rd
+81272c0ad03658960c7bb462f3ce2d71 *man/setRecombinationModel.Rd
 fac3ce58b5e2cb683a5bb60090b97f94 *man/sim1000G-package.Rd
 bb4e0561b4006c2094d9ec712ae6b1c1 *man/startSimulation.Rd
 9f00d699ebf96dcaf5106ceef73996fc *man/subsetVCF.Rd

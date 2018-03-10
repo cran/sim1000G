@@ -7,7 +7,7 @@
 setRecombinationModel(model)
 }
 \arguments{
-\item{model}{Either poisson or chisq}
+\item{model}{Either "poisson" or "chisq"}
 }
 \description{
 Set recombination model to either poisson (no interference) or chi-square.

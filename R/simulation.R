@@ -29,7 +29,7 @@ pkg.opts$recombination = 1
 #' Set recombination model to either poisson (no interference) or chi-square.
 #'
 #'
-#' @param model Either poisson or chisq
+#' @param model Either "poisson" or "chisq"
 #'
 #' @examples
 #'
