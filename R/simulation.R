@@ -263,7 +263,9 @@ SIM$generateNewHaplotypes = function(n = -1) {
 
        # cat("Generate new haplotype pool..\n");
 
-        SIM$refreshPool()
+        t <- system.time( SIM$refreshPool() )
+        print(t)
+
 
 
     }
